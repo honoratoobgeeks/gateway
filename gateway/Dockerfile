@@ -11,7 +11,6 @@ COPY Domain/*.csproj ./Domain/
 COPY Application/*.csproj ./Application/
 COPY Infra.Data/*.csproj ./Infra.Data/
 COPY Infra.IoC/*.csproj ./Infra.IoC/
-COPY Presentation.ProxyWebhook/*.csproj ./Presentation.ProxyWebhook/
 
 RUN dotnet restore
 
@@ -23,7 +22,7 @@ RUN dotnet publish -c Release -o out
 
 # Use uma imagem base do .NET SDK para rodar a aplicação e permitir o uso do dotnet-trace
 FROM mcr.microsoft.com/dotnet/sdk:7.0
-ENV ASPNETCORE_URLS=http://+:80
+ENV ASPNETCORE_URLS=http://+:5116
 
 
 # Defina o diretório de trabalho no contêiner

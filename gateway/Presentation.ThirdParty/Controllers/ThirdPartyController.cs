@@ -37,7 +37,7 @@ namespace Presentation.ThirdParty.Controllers
 
             var content = new StringContent(JsonSerializer.Serialize(webhookPayload), Encoding.UTF8, "application/json");
 
-            var webhookResponse = await _httpClient.PostAsync("http://localhost:5116/gateway/webhook", content);
+            var webhookResponse = await _httpClient.PostAsync("http://localhost:5116/mediator/webhook", content);
 
             if (webhookResponse.IsSuccessStatusCode)
             {
@@ -64,7 +64,7 @@ namespace Presentation.ThirdParty.Controllers
             };
             var content = new StringContent(JsonSerializer.Serialize(webhookPayload), Encoding.UTF8, "application/json");
 
-            _httpClient.PostAsync("http://localhost:5116/gateway/webhook", content);
+            _httpClient.PostAsync("http://localhost:5116/mediator/webhook", content);
 
             return Ok(new { message = "Get request received" });
 

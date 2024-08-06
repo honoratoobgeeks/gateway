@@ -9,9 +9,9 @@ namespace Infra.Data.Repositories
 {
     public class TransactionRepository : ITransactionRepository
     {
-        private readonly TransactionDbContext _context;
+        private readonly MediatorDbContext _context;
 
-        public TransactionRepository(TransactionDbContext context)
+        public TransactionRepository(MediatorDbContext context)
         {
             _context = context;
         }

@@ -16,7 +16,7 @@ namespace Infra.IoC
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<TransactionDbContext>(options =>
+            services.AddDbContext<MediatorDbContext>(options =>
                 options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
             services.AddScoped<ITransactionRepository, TransactionRepository>();

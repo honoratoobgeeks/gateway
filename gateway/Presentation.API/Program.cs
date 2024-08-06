@@ -14,10 +14,7 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    builder.Logging.ClearProviders();
-    builder.Logging.AddConsole();
-    builder.Logging.AddDebug();
-
+    
     // Configure Serilog
     Log.Logger = new LoggerConfiguration()
         .WriteTo.Console()
@@ -27,6 +24,12 @@ try
         .WriteTo.Console()
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services));
+    
+    // Configure Kestrel to read settings from appsettings.json
+    builder.WebHost.ConfigureKestrel((context, options) =>
+    {
+        options.Configure(context.Configuration.GetSection("Kestrel"));
+    });
 
     // Add services to the container.
     builder.Services.AddInfrastructure(builder.Configuration);
@@ -53,7 +56,7 @@ try
     });
 
 
-
+    
     builder.Services.AddMassTransit(x =>
     {
         x.UsingRabbitMq((context, cfg) =>
@@ -65,14 +68,14 @@ try
             });
         });
     });
+    
 
-
-
+    
     builder.Services.AddOpenTelemetry()
         .WithTracing(tracerProviderBuilder =>
         {
             tracerProviderBuilder
-                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("GatewayAPI"))
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MediatorAPI"))
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddJaegerExporter(options =>
@@ -84,16 +87,17 @@ try
         .WithMetrics(metricsProviderBuilder =>
         {
             metricsProviderBuilder
-                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("GatewayAPI"))
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MediatorAPI"))
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation();
         });
 
-
+    
 
     builder.Services.AddControllers();
 
     builder.Services.AddEndpointsApiExplorer();
+
 
     builder.Services.AddSwaggerGen(c =>
     {
@@ -119,21 +123,19 @@ try
         });
     });
 
+
     var app = builder.Build();
 
-    if (app.Environment.IsDevelopment())
+
+    app.UseSwaggerUI(c =>
     {
-        app.UseSwaggerUI(c =>
-        {
-            c.RoutePrefix = "gateway";
-            c.SwaggerEndpoint("swagger/v1/swagger.json", "Name");
-        });
+        c.RoutePrefix = "mediator";
+        c.SwaggerEndpoint("swagger/v1/swagger.json", "Name");
+    });
 
-        app.UsePathBase("/gateway");
+    app.UsePathBase("/mediator");
 
-        app.UseSwagger();
-
-    }
+    app.UseSwagger();
 
     app.UseHttpsRedirection();
     app.UseRouting();
@@ -141,6 +143,7 @@ try
     app.UseAuthorization();
     app.MapControllers();
     app.Run();
+    Log.Information("MediatorAPI is running...");
 }
 catch (Exception ex)
 {

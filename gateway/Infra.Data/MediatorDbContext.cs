@@ -3,11 +3,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infra.Data.Context
 {
-    public class TransactionDbContext : DbContext
+    public class MediatorDbContext : DbContext
     {
         public DbSet<Transaction> Transaction { get; set; }
 
-        public TransactionDbContext(DbContextOptions<TransactionDbContext> options)
+        public MediatorDbContext(DbContextOptions<MediatorDbContext> options)
             : base(options)
         {
         }

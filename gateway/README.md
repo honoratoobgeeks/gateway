@@ -1,8 +1,8 @@
-# Gateway API
+# Mediator API
 
 ## Descrição
 
-A Gateway API é uma aplicação construída com arquitetura limpa (Clean Architecture) em C# e .NET 7.0. Ela integra diversas APIs e um serviço financeiro para processamento de transações financeiras, utilizando RabbitMQ para mensagens assíncronas e Jaeger para rastreamento distribuído.
+A Mediator API é uma aplicação construída com arquitetura limpa (Clean Architecture) em C# e .NET 7.0. Ela integra diversas APIs e um serviço financeiro para processamento de transações financeiras, utilizando RabbitMQ para mensagens assíncronas e Jaeger para rastreamento distribuído.
 
 ## Funcionalidades
 
