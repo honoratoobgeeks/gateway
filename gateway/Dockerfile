@@ -32,7 +32,7 @@ WORKDIR /app
 COPY --from=build-env /app/out .
 
 # Exponha a porta que a aplicação vai usar
-EXPOSE 80
+EXPOSE 5116
 
 # Comando para iniciar a aplicação
 ENTRYPOINT ["dotnet", "Presentation.API.dll"]

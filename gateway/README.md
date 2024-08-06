@@ -37,11 +37,27 @@ A Mediator API é uma aplicação construída com arquitetura limpa (Clean Archi
 - **.NET 7 SDK**
 - **Docker** (para executar RabbitMQ e Jaeger)
 
-## Como Executar
+sudo docker run -d \
+  --name rabbitmq \
+  -e RABBITMQ_DEFAULT_USER=guest \
+  -e RABBITMQ_DEFAULT_PASS=guest \
+  -v /opt/rabbit_mq_data_dir:/var/lib/rabbitmq \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  --restart always \
+  --network my_network \
+  rabbitmq:3-management
 
-### 1. Configuração do RabbitMQ
-
-Execute o RabbitMQ em um container Docker:
-
-```bash
-docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
+  sudo docker run -d --name jaeger \
+  --network my_network \
+  --restart=always \
+  -e COLLECTOR_ZIPKIN_HTTP_PORT=9411 \
+  -p 5775:5775/udp \
+  -p 6831:6831/udp \
+  -p 6832:6832/udp \
+  -p 5778:5778 \
+  -p 16686:16686 \
+  -p 14268:14268 \
+  -p 14250:14250 \
+  -p 9411:9411 \
+  jaegertracing/all-in-one:1.26

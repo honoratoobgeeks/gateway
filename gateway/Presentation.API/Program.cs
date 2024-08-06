@@ -10,11 +10,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Infra.Data.Context;
+
 try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    
+
     // Configure Serilog
     Log.Logger = new LoggerConfiguration()
         .WriteTo.Console()
@@ -24,7 +25,7 @@ try
         .WriteTo.Console()
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services));
-    
+
     // Configure Kestrel to read settings from appsettings.json
     builder.WebHost.ConfigureKestrel((context, options) =>
     {
@@ -56,7 +57,7 @@ try
     });
 
 
-    
+
     builder.Services.AddMassTransit(x =>
     {
         x.UsingRabbitMq((context, cfg) =>
@@ -68,9 +69,9 @@ try
             });
         });
     });
-    
 
-    
+
+
     builder.Services.AddOpenTelemetry()
         .WithTracing(tracerProviderBuilder =>
         {
@@ -92,7 +93,7 @@ try
                 .AddHttpClientInstrumentation();
         });
 
-    
+
 
     builder.Services.AddControllers();
 

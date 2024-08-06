@@ -41,7 +41,7 @@ namespace Presentation.API.Controllers
                 if (webhookData.TryGetProperty("key", out JsonElement keyElement) && keyElement.TryGetGuid(out Guid transactionId))
                 {
                     await _transactionService.HandleWebhookAsync(transactionId, webhookData.ToString());
-                    Ok(new { message = "Post request received and sent to Rabbit MQ", webhookData });
+                    Ok(webhookData);
                 }
             }
             catch (Exception ex)
@@ -49,7 +49,7 @@ namespace Presentation.API.Controllers
 
             }
 
-            return Ok(new { message = "Post request received", webhookData });
+            return Ok(webhookData );
 
         }
 
