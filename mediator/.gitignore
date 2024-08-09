@@ -1,0 +1,53 @@
+# .NET
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Build Folders
+bin/
+obj/
+
+# Visual Studio
+.vscode/
+.vs/
+.vscode/*
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Mono Auto Generated Files
+mono_crash.*
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Temporary files
+*.tmp
+*.temp
+*.tmp.*
+
+# VS Code directories
+.vscode/
+
+# Rider
+.idea/
+
+# Log files
+*.log
+
+# NPM Packages
+node_modules/
+
+# OS Generated Files
+.DS_Store
