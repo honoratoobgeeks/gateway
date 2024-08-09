@@ -67,6 +67,57 @@ try
                 h.Username(builder.Configuration["RabbitMQ:Username"]);
                 h.Password(builder.Configuration["RabbitMQ:Password"]);
             });
+
+            cfg.Message<WebhookMessageDTO>(configTopology =>
+            {
+                configTopology.SetEntityName("FitBank");
+            });
+
+            cfg.Publish<WebhookMessageDTO>(publishConfig =>
+            {
+                publishConfig.ExchangeType = "fanout";
+            });
+
+            cfg.ReceiveEndpoint("queue_1", e =>
+            {
+                e.Bind("FitBank", x =>
+                {
+                    x.ExchangeType = "fanout";
+                });
+
+                e.Handler<WebhookMessageDTO>(async context =>
+                {
+                    // Lógica para processar as mensagens
+                    Console.WriteLine($"Queue 1 received: {context.Message.Data}");
+                });
+            });
+
+            cfg.ReceiveEndpoint("queue_2", e =>
+            {
+                e.Bind("FitBank", x =>
+                {
+                    x.ExchangeType = "fanout";
+                });
+
+                e.Handler<WebhookMessageDTO>(async context =>
+                {
+                    Console.WriteLine($"Queue 2 received: {context.Message.Data}");
+                });
+            });
+
+            cfg.ReceiveEndpoint("queue_3", e =>
+            {
+                e.Bind("FitBank", x =>
+                {
+                    x.ExchangeType = "fanout";
+                });
+
+                e.Handler<WebhookMessageDTO>(async context =>
+                {
+                    Console.WriteLine($"Queue 3 received: {context.Message.Data}");
+                });
+            });
+
         });
     });
 

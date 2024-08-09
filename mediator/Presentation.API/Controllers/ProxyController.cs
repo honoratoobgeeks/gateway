@@ -41,12 +41,14 @@ namespace Presentation.API.Controllers
                 if (webhookData.TryGetProperty("key", out JsonElement keyElement) && keyElement.TryGetGuid(out Guid transactionId))
                 {
                     await _transactionService.HandleWebhookAsync(transactionId, webhookData.ToString());
+                    Console.WriteLine("Rabbit happens");
                     Ok(webhookData);
                 }
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine("Rabbit never happens");
+                Console.WriteLine(ex.ToString());
             }
 
             return Ok(webhookData );

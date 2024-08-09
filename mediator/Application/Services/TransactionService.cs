@@ -24,7 +24,7 @@ namespace Application.Services
 
         public async Task<Guid> CreateTransactionAsync(TransactionDTO transactionDto)
         {
-             var transactionId = Guid.NewGuid();
+            var transactionId = Guid.NewGuid();
             var transaction = new Transaction
             {
                 Id = transactionId,
@@ -68,15 +68,19 @@ namespace Application.Services
             var transaction = await _repository.GetByIdAsync(transactionId);
             if (transaction != null)
             {
-                await _publishEndpoint.Publish(new
+                // Crie uma instância do WebhookMessageDTO
+                var message = new WebhookMessageDTO
                 {
-                    transaction.Exchanger,
+                    Exchanger = transaction.Exchanger,
                     Data = webhookData
-                });
+                };
+
+                // Publique a mensagem usando MassTransit
+                await _publishEndpoint.Publish(message);
             }
         }
 
-        
+
 
 
     }
