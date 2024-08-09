@@ -1,6 +1,3 @@
-Aqui está um exemplo de como você pode documentar a solução Mediator (anteriormente chamada de Gateway) em um arquivo `README.md`.
-
-```markdown
 # Mediator Solution
 
 ## Descrição
@@ -70,14 +67,13 @@ Inicie o RabbitMQ em um container Docker:
 sudo docker run -d \
   --name rabbitmq \
   -e RABBITMQ_DEFAULT_USER=guest \
-  -e RABBITMQ_DEFAULT_PASS=00cc00C@ \
+  -e RABBITMQ_DEFAULT_PASS=guest \
   -v /opt/rabbit_mq_data_dir:/var/lib/rabbitmq \
   -p 5672:5672 \
   -p 15672:15672 \
   --restart always \
   --network my_network \
-  --network-alias rabbitmq \
-  rabbitmq:management
+  rabbitmq:3-management
 ```
 
 #### 2. Inicializar Jaeger
