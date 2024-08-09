@@ -14,9 +14,15 @@ builder.Services.AddMassTransit(x =>
         });
 
         // Configura o recebimento de mensagens da queue_1
-        cfg.ReceiveEndpoint("queue_1", e =>
+         cfg.ReceiveEndpoint("queue_1", e =>
         {
-            e.Consumer<TransactionReceiver>();
+            // Bind entre queue_1 e o exchanger FitBank
+            e.Bind("FitBank", x =>
+            {
+                x.ExchangeType = "fanout"; // Tipo do exchange
+            });
+
+            e.Consumer<TransactionReceiver>(); // Consumidor que irá processar as mensagens
         });
     });
 });

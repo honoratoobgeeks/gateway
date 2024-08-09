@@ -68,15 +68,25 @@ namespace Application.Services
             var transaction = await _repository.GetByIdAsync(transactionId);
             if (transaction != null)
             {
-                // Crie uma instância do WebhookMessageDTO
-                var message = new WebhookMessageDTO
+                try
                 {
-                    Exchanger = transaction.Exchanger,
-                    Data = webhookData
-                };
+                    var message = new WebhookMessageDTO
+                    {
+                        Exchanger = transaction.Exchanger,
+                        Data = webhookData
+                    };
 
-                // Publique a mensagem usando MassTransit
-                await _publishEndpoint.Publish(message);
+                    await _publishEndpoint.Publish(message);
+                    Console.WriteLine("Mensagem publicada com sucesso.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erro ao publicar mensagem: {ex.Message}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Transação não encontrada.");
             }
         }
 
