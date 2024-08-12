@@ -59,6 +59,12 @@ A solução é composta por três aplicações principais e várias camadas de s
 
 ### Configuração do Ambiente
 
+#### 0. Criar uma rede virtual no docker
+
+```sh
+sudo docker network create my_network
+```
+
 #### 1. Inicializar RabbitMQ
 
 Inicie o RabbitMQ em um container Docker:
@@ -66,13 +72,14 @@ Inicie o RabbitMQ em um container Docker:
 ```sh
 sudo docker run -d \
   --name rabbitmq \
+  --network my_network \
+  --network-alias jaeger \
   -e RABBITMQ_DEFAULT_USER=guest \
   -e RABBITMQ_DEFAULT_PASS=guest \
   -v /opt/rabbit_mq_data_dir:/var/lib/rabbitmq \
   -p 5672:5672 \
   -p 15672:15672 \
   --restart always \
-  --network my_network \
   rabbitmq:3-management
 ```
 
