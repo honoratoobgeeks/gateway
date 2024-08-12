@@ -85,6 +85,7 @@ sudo docker run -d --name jaeger \
   --network my_network \
   --network-alias jaeger \
   --restart=always \
+  -v /opt/jaeger_data_dir:/var/lib/jaeger \
   -e COLLECTOR_ZIPKIN_HTTP_PORT=9411 \
   -p 5775:5775/udp \
   -p 6831:6831/udp \
