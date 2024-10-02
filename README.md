@@ -2,18 +2,19 @@
 
 ## Descrição
 
-A solução **Mediator** é uma arquitetura de microserviços construída em C# e .NET, utilizando o padrão de arquitetura limpa (Clean Architecture). O Mediator integra várias APIs e um serviço financeiro para o processamento de transações financeiras. A solução utiliza RabbitMQ para mensagens assíncronas e Jaeger para rastreamento distribuído.
+A solução **Mediator** é uma arquitetura de microserviços construída em C# e .NET, utilizando o padrão de arquitetura limpa (Clean Architecture). O Mediator integra várias APIs e um serviço financeiro para o processamento de transações financeiras. A solução utiliza RabbitMQ para mensagens assíncronas, Jaeger para rastreamento distribuído e Elasticsearch/Kibana para indexação e visualização de dados.
 
 ## Estrutura da Solução
 
 A solução é composta por três aplicações principais e várias camadas de suporte:
 
 ### 1. Presentation.API
-- **Função:** API principal que processa transações financeiras e publica mensagens no RabbitMQ.
-- **Tecnologias Utilizadas:** .NET 7, MassTransit, RabbitMQ, OpenTelemetry, Jaeger, Serilog.
+- **Função:** API principal que processa transações financeiras, publica mensagens no RabbitMQ, e indexa as transações no Elasticsearch.
+- **Tecnologias Utilizadas:** .NET 7, MassTransit, RabbitMQ, Elasticsearch, Kibana, OpenTelemetry, Jaeger, Serilog.
 - **Endpoints:**
-  - `/transaction` - Cria uma nova transação.
+  - `/transaction` - Cria uma nova transação e a indexa no Elasticsearch.
   - `/webhook` - Recebe webhooks para processar transações.
+  - `/search` - Permite consultar transações indexadas no Elasticsearch.
 
 ### 2. Presentation.Receiver
 - **Função:** Consome mensagens de `queue_1` no RabbitMQ e processa as transações recebidas.
@@ -29,7 +30,7 @@ A solução é composta por três aplicações principais e várias camadas de s
 ### 4. Application Layer
 - **Função:** Contém as regras de negócios e os serviços da aplicação.
 - **Componentes:** 
-  - `TransactionService` - Serviço principal que manipula transações.
+  - `TransactionService` - Serviço principal que manipula transações e indexa no Elasticsearch.
   - DTOs - Objetos de Transferência de Dados (Data Transfer Objects).
 
 ### 5. Domain Layer
@@ -55,7 +56,7 @@ A solução é composta por três aplicações principais e várias camadas de s
 ### Pré-requisitos
 
 - **.NET 7 SDK**
-- **Docker** (para executar RabbitMQ e Jaeger)
+- **Docker** (para executar RabbitMQ, Jaeger, Elasticsearch e Kibana)
 
 ### Configuração do Ambiente
 
@@ -73,7 +74,7 @@ Inicie o RabbitMQ em um container Docker:
 sudo docker run -d \
   --name rabbitmq \
   --network my_network \
-  --network-alias jaeger \
+  --network-alias rabbitmq \
   -e RABBITMQ_DEFAULT_USER=guest \
   -e RABBITMQ_DEFAULT_PASS=guest \
   -v /opt/rabbit_mq_data_dir:/var/lib/rabbitmq \
@@ -105,9 +106,56 @@ sudo docker run -d --name jaeger \
   jaegertracing/all-in-one:1.26
 ```
 
-#### 3. Configurar `appsettings.json`
+#### 3. Inicializar Elasticsearch
 
-Certifique-se de que cada aplicação tem um arquivo `appsettings.json` configurado corretamente, apontando para os serviços do RabbitMQ e Jaeger.
+Crie o diretório para os dados persistentes do Elasticsearch:
+
+```sh
+sudo mkdir -p /opt/elasticsearch_data_dir
+sudo chown 1000:1000 /opt/elasticsearch_data_dir
+```
+
+Inicie o Elasticsearch em um container Docker:
+
+```sh
+sudo docker run -d --name elasticsearch \
+  --network my_network \
+  --network-alias elasticsearch \
+  --restart=always \
+  -e "discovery.type=single-node" \
+  -e "xpack.security.enabled=false" \
+  -e "ES_JAVA_OPTS=-Xms1g -Xmx1g" \
+  -v /opt/elasticsearch_data_dir:/usr/share/elasticsearch/data \
+  -p 9200:9200 \
+  -p 9300:9300 \
+  docker.elastic.co/elasticsearch/elasticsearch:8.5.0
+```
+
+#### 4. Inicializar Kibana
+
+Crie o diretório para os dados persistentes do Kibana:
+
+```sh
+sudo mkdir -p /opt/kibana_data_dir
+sudo chown 1000:1000 /opt/kibana_data_dir
+```
+
+Inicie o Kibana em um container Docker:
+
+```sh
+sudo docker run -d --name kibana \
+  --network my_network \
+  --network-alias kibana \
+  --restart=always \
+  -e ELASTICSEARCH_HOSTS=http://elasticsearch:9200 \
+  -v /opt/kibana_data_dir:/usr/share/kibana/data \
+  -p 5601:5601 \
+  docker.elastic.co/kibana/kibana:8.5.0
+```
+
+#### 5. Configurar `appsettings.json`
+
+Certifique-se de que cada aplicação tem um arquivo `appsettings.json` configurado corretamente, apontando para os serviços do RabbitMQ, Jaeger, e Elasticsearch.
 
 Exemplo para `Presentation.API`:
 
@@ -117,6 +165,10 @@ Exemplo para `Presentation.API`:
     "Host": "rabbitmq",
     "UserName": "guest",
     "Password": "guest"
+  },
+  "Elasticsearch": {
+    "Url": "http://elasticsearch:9200",
+    "IndexName": "transactions"
   },
   "OpenTelemetry": {
     "Jaeger": {
@@ -148,10 +200,18 @@ dotnet run --project ./Presentation.Receiver
 dotnet run --project ./Presentation.ThirdParty
 ```
 
+### Configuração do Kibana
+
+1. Acesse o Kibana em `http://localhost:5601`.
+2. Navegue até "Stack Management" > "Index Patterns".
+3. Crie um novo Index Pattern com o nome do índice `transactions`.
+4. Selecione o campo de timestamp, se aplicável, ou escolha "No time field".
+5. Agora você pode explorar os dados indexados através do Kibana.
+
 ### Verificação
 
 1. **Publicação de Mensagens:**
-   - Utilize a `Presentation.API` para criar transações e verificar se as mensagens estão sendo publicadas no RabbitMQ.
+   - Utilize a `Presentation.API` para criar transações e verificar se as mensagens estão sendo publicadas no RabbitMQ e indexadas no Elasticsearch.
 
 2. **Consumo de Mensagens:**
    - Verifique se a `Presentation.Receiver` está recebendo e processando as mensagens publicadas no `queue_1`.
@@ -159,19 +219,10 @@ dotnet run --project ./Presentation.ThirdParty
 3. **Rastreamento:**
    - Utilize o Jaeger para monitorar e rastrear as transações e fluxos dentro do sistema.
 
-## Contribuição
+4. **Consulta de Dados no Elasticsearch:**
+   - Acesse o Kibana e verifique se as transações estão indexadas corretamente no Elasticsearch.
 
-1. Faça um fork do repositório.
-2. Crie uma nova branch (`git checkout -b feature/nova-feature`).
-3. Faça commit das suas alterações (`git commit -am 'Adiciona nova feature'`).
-4. Faça push para a branch (`git push origin feature/nova-feature`).
-5. Crie um novo Pull Request.
 
 ## Licença
 
 Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-```
-
-### Conclusão
-
-Este `README.md` fornece uma visão geral da solução Mediator, detalha como cada componente e aplicação funciona, e instrui os desenvolvedores sobre como configurar e executar o sistema. Ele também inclui informações sobre contribuição e licenciamento, tornando-o um documento completo para orientar o desenvolvimento e uso da solução.
