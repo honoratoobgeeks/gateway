@@ -30,7 +30,7 @@ namespace Presentation.API.Controllers
         [AllowAnonymous]
         public IActionResult Login([FromBody] UserLoginDTO model)
         {
-            if (model.Email == "honorato@canopyrss.com.br" && model.Password == "00cc00cc")
+            if (model.Email == "bruno.honorato@obgeeks.com.br" && model.Password == "00cc00cc")
             {
                 var token = GenerateJwtToken();
                 return Ok(new { token });

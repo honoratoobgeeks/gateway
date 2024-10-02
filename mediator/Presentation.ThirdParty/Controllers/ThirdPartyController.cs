@@ -37,7 +37,7 @@ namespace Presentation.ThirdParty.Controllers
 
             var content = new StringContent(JsonSerializer.Serialize(webhookPayload), Encoding.UTF8, "application/json");
 
-            var webhookResponse = await _httpClient.PostAsync("http://localhost:5116/mediator/webhook", content);
+            var webhookResponse = await _httpClient.PostAsync("https://localhost:5116/mediator/webhook", content);
 
             if (webhookResponse.IsSuccessStatusCode)
             {

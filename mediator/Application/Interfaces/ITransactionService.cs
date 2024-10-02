@@ -7,6 +7,8 @@ namespace Application.Interfaces
     {
         Task<Guid> CreateTransactionAsync(TransactionDTO transactionDto);
         Task HandleWebhookAsync(Guid transactionId, string webhookData);
+
+        Task<List<TransactionDTO>> SearchTransactionsAsync(string query);
        
     }
 }

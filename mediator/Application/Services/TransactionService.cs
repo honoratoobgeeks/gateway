@@ -4,7 +4,7 @@ using Domain.Entities;
 using Domain.Interfaces;
 using System.Text;
 using MassTransit;
-using AutoMapper;
+using Nest;
 using System.Text.Json;
 
 namespace Application.Services
@@ -14,12 +14,16 @@ namespace Application.Services
         private readonly ITransactionRepository _repository;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IPublishEndpoint _publishEndpoint;
+        private readonly IElasticClient _elasticClient; // Cliente Elasticsearch
 
-        public TransactionService(ITransactionRepository TransactionRepository, IHttpClientFactory httpClientFactory, IPublishEndpoint publishEndpoint)
+
+        public TransactionService(ITransactionRepository TransactionRepository, IHttpClientFactory httpClientFactory, IPublishEndpoint publishEndpoint, IElasticClient elasticClient)
         {
             _repository = TransactionRepository;
             _httpClientFactory = httpClientFactory;
             _publishEndpoint = publishEndpoint;
+            _elasticClient = elasticClient;
+
         }
 
         public async Task<Guid> CreateTransactionAsync(TransactionDTO transactionDto)
@@ -59,8 +63,26 @@ namespace Application.Services
                 response = await client.GetAsync(transactionDto.Endpoint);
             }
 
+            var indexResponse = await _elasticClient.IndexDocumentAsync(transactionDto);
+            if (!indexResponse.IsValid)
+            {
+                Console.WriteLine($"Erro ao indexar no Elasticsearch: {indexResponse.OriginalException.Message}");
+            }
+
             var isSuccess = response.IsSuccessStatusCode;
             return isSuccess ? transaction.Id : Guid.Empty;
+        }
+        public async Task<List<TransactionDTO>> SearchTransactionsAsync(string query)
+        {
+            var searchResponse = await _elasticClient.SearchAsync<TransactionDTO>(s => s
+                .Query(q => q
+                    .QueryString(qs => qs
+                        .Query(query)
+                    )
+                )
+            );
+
+            return searchResponse.Documents.ToList();
         }
 
         public async Task HandleWebhookAsync(Guid transactionId, string webhookData)
