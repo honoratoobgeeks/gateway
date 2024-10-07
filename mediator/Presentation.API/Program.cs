@@ -11,7 +11,6 @@ using System.Text;
 using Application.DTOs;
 using Nest;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.ConfigureKestrel((context, options) =>
@@ -61,12 +60,44 @@ builder.Services.AddMassTransit(x =>
             h.Password(builder.Configuration["RabbitMQ:Password"]);
         });
 
-        cfg.Message<WebhookMessageDTO>(configTopology =>
+        cfg.Message<TransactionDTO>(configTopology =>
         {
-            configTopology.SetEntityName("FitBank");
+            configTopology.SetEntityName(TransactionDTO.Exchanger);
+
         });
 
-        cfg.Publish<WebhookMessageDTO>(publishConfig =>
+        cfg.Publish<TransactionDTO>(publishConfig =>
+        {
+            publishConfig.ExchangeType = "fanout";
+        });
+
+        cfg.Message<SmsDTO>(configTopology =>
+        {
+            configTopology.SetEntityName(SmsDTO.Exchanger);
+
+        });
+
+        cfg.Publish<SmsDTO>(publishConfig =>
+        {
+            publishConfig.ExchangeType = "fanout";
+        });
+
+        cfg.Message<SmsWebhookDTO>(configTopology =>
+       {
+           configTopology.SetEntityName(SmsWebhookDTO.Exchanger); 
+       });
+
+        cfg.Publish<SmsWebhookDTO>(publishConfig =>
+        {
+            publishConfig.ExchangeType = "fanout";
+        });
+
+        cfg.Message<TransactionWebhookDTO>(configTopology =>
+       {
+           configTopology.SetEntityName(TransactionWebhookDTO.Exchanger); 
+       });
+
+        cfg.Publish<TransactionWebhookDTO>(publishConfig =>
         {
             publishConfig.ExchangeType = "fanout";
         });

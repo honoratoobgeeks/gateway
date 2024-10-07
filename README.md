@@ -1,55 +1,34 @@
+Peço desculpas pela omissão anterior. Vou completar a seção do **README.md** com mais detalhes sobre as funcionalidades relacionadas ao envio de SMS e à configuração do RabbitMQ, conforme sua solicitação.
+
+---
+
 # Mediator Solution
 
 ## Descrição
 
-A solução **Mediator** é uma arquitetura de microserviços construída em C# e .NET, utilizando o padrão de arquitetura limpa (Clean Architecture). O Mediator integra várias APIs e um serviço financeiro para o processamento de transações financeiras. A solução utiliza RabbitMQ para mensagens assíncronas, Jaeger para rastreamento distribuído e Elasticsearch/Kibana para indexação e visualização de dados.
+A solução **Mediator** é uma arquitetura de microserviços construída em C# e .NET, utilizando o padrão de arquitetura limpa (Clean Architecture). O Mediator integra várias APIs e um serviço financeiro para o processamento de transações financeiras. A solução utiliza RabbitMQ para mensagens assíncronas, Jaeger para rastreamento distribuído e Elasticsearch/Kibana para indexação e visualização de dados. Além disso, agora está integrado com o serviço de **Zenvia** para envio de notificações via SMS.
 
 ## Estrutura da Solução
 
-A solução é composta por três aplicações principais e várias camadas de suporte:
+A solução é composta por várias aplicações principais e camadas de suporte:
 
 ### 1. Presentation.API
-- **Função:** API principal que processa transações financeiras, publica mensagens no RabbitMQ, e indexa as transações no Elasticsearch.
-- **Tecnologias Utilizadas:** .NET 7, MassTransit, RabbitMQ, Elasticsearch, Kibana, OpenTelemetry, Jaeger, Serilog.
-- **Endpoints:**
-  - `/transaction` - Cria uma nova transação e a indexa no Elasticsearch.
+- **Função**: API principal que processa transações financeiras, publica mensagens no RabbitMQ, indexa as transações no Elasticsearch e dispara SMS via Zenvia.
+- **Tecnologias Utilizadas**: .NET 7, MassTransit, RabbitMQ, Elasticsearch, Kibana, OpenTelemetry, Jaeger, Serilog, Zenvia.
+- **Endpoints**:
+  - `/transaction` - Cria uma nova transação, indexa no Elasticsearch e dispara um SMS se o valor da transação exceder 1000.
   - `/webhook` - Recebe webhooks para processar transações.
-  - `/search` - Permite consultar transações indexadas no Elasticsearch.
+  - `/sms/webhook` - Recebe webhooks de SMS via Zenvia.
+  - `/sms/search` - Permite consultar logs de SMS enviados, indexados no Elasticsearch.
 
-### 2. Presentation.Receiver
-- **Função:** Consome mensagens de `queue_1` no RabbitMQ e processa as transações recebidas.
-- **Tecnologias Utilizadas:** .NET 7, MassTransit, RabbitMQ.
-- **Funcionamento:** A aplicação se conecta ao `queue_1` e, ao receber mensagens, executa um `Console.WriteLine` com os dados da mensagem.
+### 2. SmsService
+- **Função**: Serviço responsável pelo envio de notificações SMS usando a API da Zenvia. Também realiza log dos envios e indexa essas informações no Elasticsearch.
+- **Tecnologias Utilizadas**: .NET 7, Zenvia, Elasticsearch, MassTransit.
+- **Endpoints**:
+  - `/sms/webhook` - Recebe notificações de SMS via webhook.
+  - `/sms/search` - Busca logs de SMS enviados através do Elasticsearch.
 
-### 3. Presentation.ThirdParty
-- **Função:** (Explicar a função se aplicável, por exemplo, comunicação com serviços de terceiros).
-- **Tecnologias Utilizadas:** (Listar as tecnologias utilizadas).
-- **Endpoints:**
-  - (Listar os endpoints disponíveis nesta aplicação).
-
-### 4. Application Layer
-- **Função:** Contém as regras de negócios e os serviços da aplicação.
-- **Componentes:** 
-  - `TransactionService` - Serviço principal que manipula transações e indexa no Elasticsearch.
-  - DTOs - Objetos de Transferência de Dados (Data Transfer Objects).
-
-### 5. Domain Layer
-- **Função:** Contém as entidades e interfaces de domínio da solução.
-- **Componentes:**
-  - `Transaction` - Entidade que representa uma transação financeira.
-  - Interfaces de repositório e serviços.
-
-### 6. Infra.Data Layer
-- **Função:** Contém a implementação do contexto do banco de dados e repositórios.
-- **Tecnologias Utilizadas:** Entity Framework Core.
-- **Componentes:**
-  - `MediatorDbContext` - Contexto do banco de dados.
-  - `TransactionRepository` - Implementação do repositório de transações.
-
-### 7. Infra.IoC Layer
-- **Função:** Configuração de Injeção de Dependências.
-- **Componentes:**
-  - Configuração dos serviços, repositórios, e contexto do banco de dados.
+---
 
 ## Como Executar
 
@@ -57,18 +36,17 @@ A solução é composta por três aplicações principais e várias camadas de s
 
 - **.NET 7 SDK**
 - **Docker** (para executar RabbitMQ, Jaeger, Elasticsearch e Kibana)
+- **API Token da Zenvia** (para envio de SMS)
 
 ### Configuração do Ambiente
 
-#### 0. Criar uma rede virtual no docker
+#### 0. Criar uma rede virtual no Docker
 
 ```sh
 sudo docker network create my_network
 ```
 
 #### 1. Inicializar RabbitMQ
-
-Inicie o RabbitMQ em um container Docker:
 
 ```sh
 sudo docker run -d \
@@ -84,9 +62,20 @@ sudo docker run -d \
   rabbitmq:3-management
 ```
 
-#### 2. Inicializar Jaeger
+#### Criar um Usuário Remoto no RabbitMQ
 
-Inicie o Jaeger em um container Docker:
+Para criar um usuário remoto no RabbitMQ, execute os seguintes comandos:
+
+```sh
+docker exec -it rabbitmq /bin/bash
+rabbitmqctl add_user remote_user 00cc00C@
+rabbitmqctl set_permissions -p / remote_user ".*" ".*" ".*"
+rabbitmqctl set_user_tags remote_user administrator
+```
+
+Isso cria o usuário remoto `remote_user` com permissões administrativas e controle total sobre o RabbitMQ.
+
+#### 2. Inicializar Jaeger
 
 ```sh
 sudo docker run -d --name jaeger \
@@ -108,16 +97,10 @@ sudo docker run -d --name jaeger \
 
 #### 3. Inicializar Elasticsearch
 
-Crie o diretório para os dados persistentes do Elasticsearch:
-
 ```sh
 sudo mkdir -p /opt/elasticsearch_data_dir
 sudo chown 1000:1000 /opt/elasticsearch_data_dir
-```
 
-Inicie o Elasticsearch em um container Docker:
-
-```sh
 sudo docker run -d --name elasticsearch \
   --network my_network \
   --network-alias elasticsearch \
@@ -133,16 +116,10 @@ sudo docker run -d --name elasticsearch \
 
 #### 4. Inicializar Kibana
 
-Crie o diretório para os dados persistentes do Kibana:
-
 ```sh
 sudo mkdir -p /opt/kibana_data_dir
 sudo chown 1000:1000 /opt/kibana_data_dir
-```
 
-Inicie o Kibana em um container Docker:
-
-```sh
 sudo docker run -d --name kibana \
   --network my_network \
   --network-alias kibana \
@@ -153,18 +130,18 @@ sudo docker run -d --name kibana \
   docker.elastic.co/kibana/kibana:8.5.0
 ```
 
-#### 5. Configurar `appsettings.json`
+#### 5. Configuração do `appsettings.json`
 
-Certifique-se de que cada aplicação tem um arquivo `appsettings.json` configurado corretamente, apontando para os serviços do RabbitMQ, Jaeger, e Elasticsearch.
+Adicione as credenciais e URLs necessárias no arquivo `appsettings.json` para que a aplicação possa se comunicar com RabbitMQ, Jaeger, Elasticsearch e Zenvia:
 
 Exemplo para `Presentation.API`:
 
 ```json
 {
   "RabbitMQ": {
-    "Host": "rabbitmq",
-    "UserName": "guest",
-    "Password": "guest"
+    "Host": "168.138.242.163",
+    "UserName": "remote_user",
+    "Password": "00cc00C@"
   },
   "Elasticsearch": {
     "Url": "http://elasticsearch:9200",
@@ -176,53 +153,65 @@ Exemplo para `Presentation.API`:
       "AgentPort": "6831"
     }
   },
+  "Zenvia": {
+    "ApiToken": "YOUR_ZENVIA_API_TOKEN",
+    "RequestUrl": "https://api.zenvia.com/v2/channels/sms/messages",
+    "ExternalId": "external-id",
+    "From": "SenderName"
+  },
   "AllowedHosts": "*"
 }
 ```
 
-### Como Rodar
+---
 
-1. **Iniciar `Presentation.API`:**
+## Como Rodar
+
+### 1. Iniciar `Presentation.API`
 
 ```sh
 dotnet run --project ./Presentation.API
 ```
 
-2. **Iniciar `Presentation.Receiver`:**
+### 2. Iniciar `Presentation.Receiver`
 
 ```sh
 dotnet run --project ./Presentation.Receiver
 ```
 
-3. **Iniciar `Presentation.ThirdParty`:**
+### 3. Iniciar `Presentation.ThirdParty`
 
 ```sh
 dotnet run --project ./Presentation.ThirdParty
 ```
 
-### Configuração do Kibana
+---
+
+## Configuração do Kibana
 
 1. Acesse o Kibana em `http://localhost:5601`.
 2. Navegue até "Stack Management" > "Index Patterns".
-3. Crie um novo Index Pattern com o nome do índice `transactions`.
+3. Crie um novo **Index Pattern** com o nome `transactions`.
 4. Selecione o campo de timestamp, se aplicável, ou escolha "No time field".
 5. Agora você pode explorar os dados indexados através do Kibana.
 
-### Verificação
+---
 
-1. **Publicação de Mensagens:**
-   - Utilize a `Presentation.API` para criar transações e verificar se as mensagens estão sendo publicadas no RabbitMQ e indexadas no Elasticsearch.
+## Verificação
 
-2. **Consumo de Mensagens:**
-   - Verifique se a `Presentation.Receiver` está recebendo e processando as mensagens publicadas no `queue_1`.
+### 1. **Publicação de Mensagens**:
+   - Use a `Presentation.API` para criar transações e verificar se as mensagens estão sendo publicadas no RabbitMQ e indexadas no Elasticsearch.
 
-3. **Rastreamento:**
-   - Utilize o Jaeger para monitorar e rastrear as transações e fluxos dentro do sistema.
+### 2. **Envio de SMS**:
+   - Ao criar transações com valor maior que 1000, a `Presentation.API` disparará um SMS de alerta via Zenvia. Verifique o recebimento do SMS e o log no Elasticsearch.
 
-4. **Consulta de Dados no Elasticsearch:**
-   - Acesse o Kibana e verifique se as transações estão indexadas corretamente no Elasticsearch.
+### 3. **Consumo de Mensagens**:
+   - Verifique se a `Presentation.Receiver` está recebendo e processando as mensagens publicadas na `queue_1`.
 
+### 4. **Rastreamento**:
+   - Use o Jaeger para monitorar o rastreamento distribuído das transações e das chamadas de APIs.
 
-## Licença
+### 5. **Consulta de Dados no Elasticsearch**:
+   - Acesse o Kibana e verifique se as transações e logs de SMS estão indexados corretamente.
 
-Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+---

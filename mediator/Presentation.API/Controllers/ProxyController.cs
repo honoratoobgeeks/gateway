@@ -36,24 +36,28 @@ namespace Presentation.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Webhook([FromBody] JsonElement webhookData)
         {
-
             try
             {
+                var sourceIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+                var eventType = "TransactionWebhookEvent";
+
+                var headers = Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString());
+
                 if (webhookData.TryGetProperty("key", out JsonElement keyElement) && keyElement.TryGetGuid(out Guid transactionId))
                 {
-                    await _transactionService.HandleWebhookAsync(transactionId, webhookData.ToString());
-                    //Console.WriteLine("Rabbit happens");
-                    Ok(webhookData);
+                    await _transactionService.HandleWebhookAsync(transactionId, webhookData.ToString(), sourceIp, eventType, headers);
+
+                    return Ok(webhookData);
                 }
             }
             catch (Exception ex)
             {
-                // Console.WriteLine("Rabbit never happens");
-                Console.WriteLine(ex.ToString());
+                Console.WriteLine($"Erro ao processar o webhook: {ex.Message}");
+                return StatusCode(500, "Erro interno ao processar o webhook.");
             }
 
-            return Ok(webhookData);
-
+            return BadRequest("Chave de transação não encontrada ou inválida.");
         }
 
         [HttpGet("search")]

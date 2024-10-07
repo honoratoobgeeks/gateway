@@ -23,6 +23,8 @@ namespace Infra.IoC
             
             services.AddScoped<ITransactionService, TransactionService>();
 
+            services.AddScoped<ISmsService, SmsService>();
+
             services.AddAutoMapper(typeof(DomainToDTOMappingProfile));
 
             return services;

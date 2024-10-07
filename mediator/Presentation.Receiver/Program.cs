@@ -1,4 +1,5 @@
 using MassTransit;
+using Application.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,16 +14,14 @@ builder.Services.AddMassTransit(x =>
             h.Password(builder.Configuration["RabbitMQ:Password"]);
         });
 
-        // Configura o recebimento de mensagens da queue_1
-         cfg.ReceiveEndpoint("queue_1", e =>
+         cfg.ReceiveEndpoint("SmsWebhookDTO_Receiver", e =>
         {
-            // Bind entre queue_1 e o exchanger FitBank
-            e.Bind("FitBank", x =>
+            e.Bind(SmsWebhookDTO.Exchanger, x =>
             {
-                x.ExchangeType = "fanout"; // Tipo do exchange
+                x.ExchangeType = "fanout";
             });
 
-            e.Consumer<TransactionReceiver>(); // Consumidor que irá processar as mensagens
+            e.Consumer<SmsReceiver>();
         });
     });
 });
