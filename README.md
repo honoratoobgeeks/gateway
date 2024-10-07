@@ -1,6 +1,4 @@
-Peço desculpas pela omissão anterior. Vou completar a seção do **README.md** com mais detalhes sobre as funcionalidades relacionadas ao envio de SMS e à configuração do RabbitMQ, conforme sua solicitação.
 
----
 
 # Mediator Solution
 
