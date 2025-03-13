@@ -15,14 +15,14 @@ namespace Application.Services
         private readonly ITransactionRepository _repository;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IPublishEndpoint _publishEndpoint;
-        private readonly IElasticClient _elasticClient;
+        //private readonly IElasticClient _elasticClient;
         private readonly ISmsService _smsService;
-        public TransactionService(ITransactionRepository TransactionRepository, IHttpClientFactory httpClientFactory, IPublishEndpoint publishEndpoint, IElasticClient elasticClient, ISmsService smsService)
+        public TransactionService(ITransactionRepository TransactionRepository, IHttpClientFactory httpClientFactory, IPublishEndpoint publishEndpoint, ISmsService smsService)
         {
             _repository = TransactionRepository;
             _httpClientFactory = httpClientFactory;
             _publishEndpoint = publishEndpoint;
-            _elasticClient = elasticClient;
+            //_elasticClient = elasticClient;
             _smsService = smsService;
 
 
@@ -47,7 +47,6 @@ namespace Application.Services
                 var transactionData = new
                 {
                     Id = transactionId,
-                    Data = transactionDto.Data
                 };
 
                 transaction.Data = JsonSerializer.Serialize(transactionData);
@@ -70,21 +69,22 @@ namespace Application.Services
                 {
                     response = await client.GetAsync(transactionDto.Endpoint);
                 }
-                */
+                
 
                 var indexResponse = await _elasticClient.IndexDocumentAsync(transactionDto);
                 if (!indexResponse.IsValid)
                 {
                     Console.WriteLine($"Erro ao indexar no Elasticsearch: {indexResponse.OriginalException.Message}");
-                }
+                }*/
 
                 var transactionDetails = JsonSerializer.Deserialize<TransactionData>(transactionDto.Data);
 
+                /*
                 if (transactionDetails != null && transactionDetails.Amount > 1000)
                 {
                     // Envie um SMS se o amount for maior que 1000
                     await _smsService.SendSmsAsync("+5585999102103", $"Alerta: Uma transação de valor {transactionDetails.Amount} foi realizada.");
-                }
+                }*/
 
                 return !transaction.Id.Equals(Guid.Empty) ? transaction.Id : Guid.Empty;
             }
@@ -96,7 +96,7 @@ namespace Application.Services
                 return Guid.Empty;
             }
         }
-        public async Task<List<TransactionDTO>> SearchTransactionsAsync(string query)
+       /* public async Task<List<TransactionDTO>> SearchTransactionsAsync(string query)
         {
             var searchResponse = await _elasticClient.SearchAsync<TransactionDTO>(s => s
                 .Query(q => q
@@ -107,7 +107,7 @@ namespace Application.Services
             );
 
             return searchResponse.Documents.ToList();
-        }
+        }*/
 
         public async Task HandleWebhookAsync(Guid transactionId, string webhookData, string sourceIp, string eventType, Dictionary<string, string> headers)
         {

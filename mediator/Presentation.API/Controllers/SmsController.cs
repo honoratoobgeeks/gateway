@@ -48,14 +48,14 @@ namespace Presentation.API.Controllers
 
         }
 
-        [HttpGet("search")]
+       /* [HttpGet("search")]
         [AllowAnonymous]
 
         public async Task<IActionResult> SearchSms([FromQuery] string query)
         {
             var results = await _smsService.SearchSmsAsync(query);
             return Ok(results);
-        }
+        }*/
 
     }
 }

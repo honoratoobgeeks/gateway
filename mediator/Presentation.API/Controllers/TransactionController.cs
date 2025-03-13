@@ -8,7 +8,7 @@ using Nest;
 
 namespace Presentation.API.Controllers
 {
-    [Route("")]
+    [Route("transaction")]
     [ApiController]
     public class ProxyController : ControllerBase
     {
@@ -60,14 +60,14 @@ namespace Presentation.API.Controllers
             return BadRequest("Chave de transação não encontrada ou inválida.");
         }
 
-        [HttpGet("search")]
+        /*[HttpGet("search")]
         [AllowAnonymous]
 
         public async Task<IActionResult> SearchTransactions([FromQuery] string query)
         {
             var results = await _transactionService.SearchTransactionsAsync(query);
             return Ok(results);
-        }
+        }*/
 
     }
 }

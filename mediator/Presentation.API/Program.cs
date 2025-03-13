@@ -42,13 +42,13 @@ builder.Services.AddAuthentication(x =>
     };
 });
 
-var elasticSettings = new ConnectionSettings(new Uri(builder.Configuration["Elasticsearch:Url"]))
-    .DefaultIndex(builder.Configuration["Elasticsearch:IndexName"]);
+//var elasticSettings = new ConnectionSettings(new Uri(builder.Configuration["Elasticsearch:Url"]))
+//    .DefaultIndex(builder.Configuration["Elasticsearch:IndexName"]);
 
-var elasticClient = new ElasticClient(elasticSettings);
+//var elasticClient = new ElasticClient(elasticSettings);
 
 // Adicionar o cliente Elasticsearch aos serviços
-builder.Services.AddSingleton<IElasticClient>(elasticClient);
+//builder.Services.AddSingleton<IElasticClient>(elasticClient);
 
 builder.Services.AddMassTransit(x =>
 {
@@ -107,7 +107,7 @@ builder.Services.AddMassTransit(x =>
 
 
 
-builder.Services.AddOpenTelemetry()
+/*builder.Services.AddOpenTelemetry()
     .WithTracing(tracerProviderBuilder =>
     {
         tracerProviderBuilder
@@ -126,7 +126,7 @@ builder.Services.AddOpenTelemetry()
             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MediatorAPI"))
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation();
-    });
+    });*/
 
 
 
@@ -165,11 +165,11 @@ var app = builder.Build();
 
 app.UseSwaggerUI(c =>
 {
-    c.RoutePrefix = "mediator";
-    c.SwaggerEndpoint("/mediator/swagger/v1/swagger.json", "Name");
+    c.RoutePrefix = "mediator/api/v1";
+    c.SwaggerEndpoint("/mediatorapi/v1/swagger/swagger.json", "Name");
 });
 
-app.UsePathBase("/mediator");
+app.UsePathBase("/mediator/api/v1");
 
 app.UseSwagger();
 

@@ -18,9 +18,9 @@ namespace Application.Services
         private readonly string _from;
         private readonly HttpClient _httpClient;
         private readonly IPublishEndpoint _publishEndpoint;
-        private readonly IElasticClient _elasticClient; // Cliente Elasticsearch
+       // private readonly IElasticClient _elasticClient; // Cliente Elasticsearch
 
-        public SmsService(IConfiguration configuration, IHttpClientFactory httpClientFactory, IPublishEndpoint publishEndpoint, IElasticClient elasticClient)
+        public SmsService(IConfiguration configuration, IHttpClientFactory httpClientFactory, IPublishEndpoint publishEndpoint /*IElasticClient elasticClient*/)
         {
             _apiToken = configuration["Zenvia:ApiToken"];
             _requestUrl = configuration["Zenvia:RequestUrl"];
@@ -28,7 +28,7 @@ namespace Application.Services
             _from = configuration["Zenvia:From"];
             _httpClient = httpClientFactory.CreateClient();
             _publishEndpoint = publishEndpoint;
-            _elasticClient = elasticClient;
+          //  _elasticClient = elasticClient;
 
         }
 
@@ -72,7 +72,7 @@ namespace Application.Services
 
                 };
 
-                PublishSmsAsync(smsDTO);
+               // PublishSmsAsync(smsDTO);
 
             }
         }
@@ -91,15 +91,15 @@ namespace Application.Services
                 _publishEndpoint.Publish(smsDto);
             }
 
-            var indexResponse = await _elasticClient.IndexDocumentAsync(smsDto);
-            if (!indexResponse.IsValid)
-            {
-                Console.WriteLine($"Erro ao indexar no Elasticsearch: {indexResponse.OriginalException.Message}");
-            }
+           // var indexResponse = await _elasticClient.IndexDocumentAsync(smsDto);
+           // if (!indexResponse.IsValid)
+           // {
+            //    Console.WriteLine($"Erro ao indexar no Elasticsearch: {indexResponse.OriginalException.Message}");
+            //}
 
             return !smsDto.Id.Equals(Guid.Empty) ? smsDto.Id : Guid.Empty;
         }
-        public async Task<List<SmsDTO>> SearchSmsAsync(string query)
+        /*public async Task<List<SmsDTO>> SearchSmsAsync(string query)
         {
             var searchResponse = await _elasticClient.SearchAsync<SmsDTO>(s => s
                 .Query(q => q
@@ -110,7 +110,7 @@ namespace Application.Services
             );
 
             return searchResponse.Documents.ToList();
-        }
+        }*/
         public async Task HandleWebhookAsync(string webhookData, string sourceIp, string eventType, Dictionary<string, string> headers)
         {
             try
